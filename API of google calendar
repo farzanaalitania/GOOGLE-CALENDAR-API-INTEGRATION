@@ -1,0 +1,69 @@
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
+from pprint import pprint
+from datetime import datetime
+
+# Function to convert date and time to RFC3339 format
+def convert_to_RFC_datetime(year, month, day, hour, minute):
+    dt = datetime(year, month, day, hour, minute)
+    return dt.isoformat() + 'Z'
+
+# Load service account credentials from JSON file content
+credentials_info = {
+  "type": "service_account",
+  "project_id": "",
+  "private_key_id": "9",
+  "private_key": "-----BEGIN PRIVATE KEY-----\n"client_email": "",
+  "client_id": "",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": 
+}
+
+# Constants for Google Calendar API
+API_NAME = 'calendar'
+API_VERSION = 'v3'
+SCOPES = ['https://www.googleapis.com/auth/calendar']
+
+# Load credentials from JSON
+credentials = service_account.Credentials.from_service_account_info(credentials_info, scopes=SCOPES)
+
+# Create Google Calendar service
+service = build(API_NAME, API_VERSION, credentials=credentials)
+
+try:
+    # Fetch and print available calendar colors
+    colors = service.colors().get().execute()
+    pprint(colors)
+
+    # Adjust hours for your timezone if necessary
+    hour_adjustment = +6
+
+    # Define event details
+    event_request_body = {
+        'start': {
+            'dateTime': convert_to_RFC_datetime(2024, 8, 1, 1 + hour_adjustment, 30),
+            'timeZone': 'Asia/Dhaka'
+        },
+        'end': {
+            'dateTime': convert_to_RFC_datetime(2024, 8, 1, 2 + hour_adjustment, 30),
+            'timeZone': 'Asia/Dhaka'
+        },
+        'summary': 'Family Lunch',
+        'description': 'Having lunch with parents',
+        'status': 'confirmed',
+        'transparency': 'opaque',
+        'visibility': 'private'
+    }
+
+    # Insert the event into the specified calendar
+    response = service.events().insert(
+        calendarId='efb9bcbb73663283d577726275fdb13c3d9656d7b5effb861748ea861692b2a1@group.calendar.google.com',  # Replace with your calendar ID
+        body=event_request_body
+    ).execute()
+
+    pprint(response)
+
+except Exception as e:
+    print(f"An error occurred: {e}")
